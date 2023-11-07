@@ -19,7 +19,7 @@ public class Main {
                 new User("Dmytro", blockChain));
         List<MoneyHandler> moneyHandlers = new ArrayList<>(users);
 
-        for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+        for (int i = 0; i < (Runtime.getRuntime().availableProcessors() - 2); i++) {
             moneyHandlers.add(new Miner(blockChain));
         }
         blockChain.setMoneyHandlers(moneyHandlers);

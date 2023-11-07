@@ -63,10 +63,11 @@ public class Miner extends MoneyHandler {
         LocalTime before = LocalTime.now();
 
         long generatedYet = blockChain.getSize();
-        Block newBlock = new Block();
+        Block newBlock;
         Block prevBlock = blockChain.getTail();
 
         do {
+            newBlock = new Block();
             newBlock.init(prevBlock);
         } while (!newBlock.isProved(blockChain.getN()));
 
@@ -78,7 +79,7 @@ public class Miner extends MoneyHandler {
                     || !blockChain.addBlock(newBlock)) return null;
 
             long size = blockChain.getSize();
-            if(size > 1) newBlock.setMessages(blockChain.getLastTransaction());
+            newBlock.setMessages(blockChain.getLastTransaction());
             if(size <= BLOCKCHAIN_PRINTED_SIZE) printResult(newBlock, generationTime);
             return newBlock;
         }

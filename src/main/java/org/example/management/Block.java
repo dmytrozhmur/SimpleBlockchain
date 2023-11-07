@@ -15,6 +15,7 @@ import static org.example.utils.Constants.*;
 import static org.example.utils.Encryption.*;
 
 public class Block implements Serializable {
+    private boolean initialized = false;
     private long id;
     private long timeStamp;
     private long magicNumber;
@@ -22,9 +23,11 @@ public class Block implements Serializable {
     private TreeSet<Transaction> messages
             = new TreeSet<>(Comparator.comparingLong(Transaction::getId));
 
-    Block next;
+    private Block next;
 
     public void init(Block prev) {
+        if (initialized) return;
+
         if(prev == null) {
             this.id = 1;
             this.previousHash = ZERO;
@@ -35,10 +38,13 @@ public class Block implements Serializable {
 
         this.timeStamp = new Date().getTime();
         this.magicNumber = getRandomNumber(Long.MAX_VALUE);
+        this.initialized = true;
     }
 
     public String hash() {
-        return applySHA256(id + timeStamp + magicNumber + previousHash);
+        StringBuilder hashInput = new StringBuilder(id + timeStamp + magicNumber + previousHash);
+//        messages.stream().map(Transaction::toString).forEach(hashInput::append);
+        return applySHA256(hashInput.toString());
     }
 
     public boolean isProved(int zerosQuantityRequired) {
@@ -63,6 +69,7 @@ public class Block implements Serializable {
     }
 
     public void setMessages(List<Transaction> messages) {
+        if (!this.messages.isEmpty()) return;
         this.messages.addAll(messages);
     }
 
@@ -76,5 +83,14 @@ public class Block implements Serializable {
 
     long getMagicNumber() {
         return magicNumber;
+    }
+
+    Block getNext() {
+        return next;
+    }
+
+    void setNext(Block next) {
+        if (this.next != null) return;
+        this.next = next;
     }
 }

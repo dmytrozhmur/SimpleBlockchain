@@ -39,7 +39,7 @@ public class BlockChain implements Iterable<Block>, Serializable {
         if(isInvalid(newBlock)) return false;
 
         if(head == null) head = newBlock;
-        else tail.next = newBlock;
+        else tail.setNext(newBlock);
 
         tail = newBlock;
         size++;
@@ -105,7 +105,7 @@ public class BlockChain implements Iterable<Block>, Serializable {
         @Override
         public Block next() {
             Block lastReturned = curr;
-            curr = curr.next;
+            curr = curr.getNext();
             return lastReturned;
         }
     }
