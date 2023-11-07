@@ -9,6 +9,7 @@ import static org.example.utils.Encryption.*;
 
 public abstract class MoneyHandler extends Thread {
     protected String nickName;
+    protected boolean alive;
     protected final BlockChain blockChain;
     protected int moneyForCreation = 100;
     private final LinkedList<Transaction> transactions = new LinkedList<>();
@@ -37,6 +38,13 @@ public abstract class MoneyHandler extends Thread {
         return transaction;
     }
 
+    public void kill() throws InterruptedException {
+        alive = false;
+        while (isAlive()) {
+            wait(0);
+        }
+    }
+
     public String name() {
         return nickName;
     }
@@ -52,6 +60,23 @@ public abstract class MoneyHandler extends Thread {
         }
 
         return moneyHeld;
+    }
+
+    protected void checkBlockChain() {
+        for (Block block : blockChain) {
+            if (!block.getNext().getPreviousHash().equals(block.hash())) {
+                restructureBlockChain(block);
+            }
+        }
+    }
+
+    private void restructureBlockChain(Block block) {
+        if (block.tryFixMessages()) return;
+        for (Block validBlock : blockChain) {
+            if (validBlock.getNext().equals(block)) {
+                validBlock.removeNext();
+            }
+        }
     }
 
     protected MoneyHandler getRandomReceiver() {

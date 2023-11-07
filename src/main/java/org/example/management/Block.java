@@ -1,12 +1,6 @@
 package org.example.management;
 
-import org.example.exceptions.EncryptionException;
-
 import java.io.Serializable;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,6 +9,7 @@ import static org.example.utils.Constants.*;
 import static org.example.utils.Encryption.*;
 
 public class Block implements Serializable {
+    private boolean initialized;
     private long id;
     private long timeStamp;
     private long magicNumber;
@@ -22,9 +17,14 @@ public class Block implements Serializable {
     private TreeSet<Transaction> messages
             = new TreeSet<>(Comparator.comparingLong(Transaction::getId));
 
-    Block next;
+    private Block next;
+
+    public Block() {
+    }
 
     public void init(Block prev) {
+        if (this.initialized) return;
+
         if(prev == null) {
             this.id = 1;
             this.previousHash = ZERO;
@@ -38,10 +38,12 @@ public class Block implements Serializable {
     }
 
     public String hash() {
-        return applySHA256(id + timeStamp + magicNumber + previousHash);
+        StringBuilder hashInput = new StringBuilder(id + timeStamp + magicNumber + previousHash);
+        messages.forEach(hashInput::append);
+        return applySHA256(hashInput.toString());
     }
 
-    public boolean isProved(int zerosQuantityRequired) {
+    boolean isProved(int zerosQuantityRequired) {
         String patternString = String.format("%s{%d}[^%s]{1}.{%d}",
                 ZERO, zerosQuantityRequired, ZERO, SHA_LENGTH - zerosQuantityRequired - 1);
         Pattern pattern = Pattern.compile(patternString);
@@ -76,5 +78,45 @@ public class Block implements Serializable {
 
     long getMagicNumber() {
         return magicNumber;
+    }
+
+    boolean tryFixMessages() {
+        if (isValid(this)) return true;
+
+        Stack<Transaction> transactionStack = new Stack<>();
+        messages.forEach(transactionStack::push);
+        while (!transactionStack.isEmpty()) {
+            Transaction last = transactionStack.pop();
+            messages.remove(last);
+            if (isValid(this)) return true;
+        }
+        return false;
+    }
+
+    Block getNext() {
+        return next;
+    }
+
+    void setNext(Block next) {
+        if (this.next != null) return;
+        this.next = next;
+    }
+
+    void removeNext() {
+        if (isValid(this.next)) return;
+        this.next = this.next.next;
+        restructureNext(this.next);
+    }
+
+    private static void restructureNext(Block restructured) {
+        if (restructured.next == null) return;
+
+        restructured.next.previousHash = restructured.hash();
+        restructureNext(restructured.next);
+    }
+
+    private static boolean isValid(Block checked) {
+        if (checked == null || checked.next == null) return true;
+        return checked.next.previousHash.equals(checked.hash());
     }
 }

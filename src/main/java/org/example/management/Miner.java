@@ -39,18 +39,24 @@ public class Miner extends MoneyHandler {
 
     @Override
     public void run() {
-        nickName += Thread.currentThread().getId();
+        this.alive = true;
+        this.nickName += Thread.currentThread().getId();
 
-        while (blockChain.getSize() < BLOCKCHAIN_SIZE) {
-            if(generateBlock() != null) moneyForCreation += CREATION_AWARD;
+        while (this.alive) {
+            checkBlockChain();
+            while (blockChain.getSize() < BLOCKCHAIN_SIZE) {
+                if(generateBlock() != null) moneyForCreation += CREATION_AWARD;
 
-            try {
-                createTransaction(new String[] {
-                        String.valueOf(getRandomNumber(getMoneyHeld()) + 1),
-                        getRandomReceiver().toString()
-                });
-            } catch (RuntimeException re) {
-                log(re.getMessage() + "\n");
+                try {
+                    createTransaction(new String[] {
+                            String.valueOf(getRandomNumber(getMoneyHeld()) + 1),
+                            getRandomReceiver().toString()
+                    });
+                } catch (RuntimeException re) {
+                    log(re.getMessage() + "\n");
+                } finally {
+                    checkBlockChain();
+                }
             }
         }
     }
@@ -63,10 +69,11 @@ public class Miner extends MoneyHandler {
         LocalTime before = LocalTime.now();
 
         long generatedYet = blockChain.getSize();
-        Block newBlock = new Block();
+        Block newBlock;
         Block prevBlock = blockChain.getTail();
 
         do {
+            newBlock = new Block();
             newBlock.init(prevBlock);
         } while (!newBlock.isProved(blockChain.getN()));
 

@@ -21,6 +21,7 @@ public class Main {
 
         for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
             moneyHandlers.add(new Miner(blockChain));
+            System.out.printf("Miner %d was created\n", i+1);
         }
         blockChain.setMoneyHandlers(moneyHandlers);
 
@@ -28,7 +29,7 @@ public class Main {
         Thread.sleep(SECOND_TO_MILLIS);
 
         for (MoneyHandler handler : moneyHandlers) {
-            handler.join();
+            handler.kill();
         }
         InputHelper.off();
     }
