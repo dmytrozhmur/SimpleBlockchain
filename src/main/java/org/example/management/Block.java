@@ -1,12 +1,6 @@
 package org.example.management;
 
-import org.example.exceptions.EncryptionException;
-
 import java.io.Serializable;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,10 +16,11 @@ public class Block implements Serializable {
     private String previousHash;
     private TreeSet<Transaction> messages
             = new TreeSet<>(Comparator.comparingLong(Transaction::getId));
+    private String hash;
 
     private Block next;
 
-    public void init(Block prev) {
+    public void init(Block prev, List<Transaction> lastTransactions) {
         if (initialized) return;
 
         if(prev == null) {
@@ -36,15 +31,15 @@ public class Block implements Serializable {
             this.previousHash = prev.hash();
         }
 
+        setMessages(lastTransactions);
         this.timeStamp = new Date().getTime();
         this.magicNumber = getRandomNumber(Long.MAX_VALUE);
+        this.hash = detrmineHash();
         this.initialized = true;
     }
 
     public String hash() {
-        StringBuilder hashInput = new StringBuilder(id + timeStamp + magicNumber + previousHash);
-//        messages.stream().map(Transaction::toString).forEach(hashInput::append);
-        return applySHA256(hashInput.toString());
+        return hash;
     }
 
     public boolean isProved(int zerosQuantityRequired) {
@@ -68,8 +63,7 @@ public class Block implements Serializable {
         return (TreeSet<Transaction>) messages.clone();
     }
 
-    public void setMessages(List<Transaction> messages) {
-        if (!this.messages.isEmpty()) return;
+    private void setMessages(List<Transaction> messages) {
         this.messages.addAll(messages);
     }
 
@@ -92,5 +86,13 @@ public class Block implements Serializable {
     void setNext(Block next) {
         if (this.next != null) return;
         this.next = next;
+    }
+
+    private String detrmineHash() {
+        StringBuilder hashInput = new StringBuilder(id + timeStamp + magicNumber + previousHash);
+        for (Transaction message : messages) {
+            hashInput.append(message);
+        }
+        return applySHA256(hashInput.toString());
     }
 }

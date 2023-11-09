@@ -17,7 +17,12 @@ public class User extends MoneyHandler {
     public void run() {
         while (blockChain.getSize() < BLOCKCHAIN_SIZE) {
             try {
-                createTransaction(getMessage().split(" "));
+                String userInput = getMessage();
+                if (userInput.equalsIgnoreCase("balance")) {
+                    System.out.printf("\n User %s has %d coins\n", nickName, getMoneyHeld());
+                } else {
+                    createTransaction(userInput.split(" "));
+                }
             } catch (IllegalTransactionArgumentException itae) {
                 System.err.println(itae.getMessage());
             }

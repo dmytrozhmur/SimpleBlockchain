@@ -27,7 +27,7 @@ public class BlockChain implements Iterable<Block>, Serializable {
             return -1;
         }
 
-        if(generationTime < SECOND_TENTH_TO_NANOS) {
+        if(generationTime < SECOND_TO_NANOS/2) {
             N.incrementAndGet();
             return 1;
         }
@@ -43,6 +43,8 @@ public class BlockChain implements Iterable<Block>, Serializable {
 
         tail = newBlock;
         size++;
+
+        transactions.removeAll(newBlock.getMessages());
 
         return true;
     }
@@ -62,9 +64,8 @@ public class BlockChain implements Iterable<Block>, Serializable {
         if(isTransactionValid) transactions.add(transaction);
     }
 
-    public List<Transaction> getLastTransaction() {
+    public synchronized List<Transaction> getLastTransactions() {
         List<Transaction> lastMessages = new ArrayList<>(transactions);
-        transactions.clear();
         return lastMessages;
     }
 

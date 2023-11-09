@@ -1,17 +1,9 @@
 package org.example.management;
 
-import org.example.exceptions.IllegalTransactionArgumentException;
 import org.example.exceptions.LoggingException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,8 +34,6 @@ public class Miner extends MoneyHandler {
         nickName += Thread.currentThread().getId();
 
         while (blockChain.getSize() < BLOCKCHAIN_SIZE) {
-            if(generateBlock() != null) moneyForCreation += CREATION_AWARD;
-
             try {
                 createTransaction(new String[] {
                         String.valueOf(getRandomNumber(getMoneyHeld()) + 1),
@@ -52,6 +42,8 @@ public class Miner extends MoneyHandler {
             } catch (RuntimeException re) {
                 log(re.getMessage() + "\n");
             }
+
+            if(generateBlock() != null) moneyHandled += CREATION_AWARD;
         }
     }
 
@@ -64,11 +56,10 @@ public class Miner extends MoneyHandler {
 
         long generatedYet = blockChain.getSize();
         Block newBlock;
-        Block prevBlock = blockChain.getTail();
 
         do {
             newBlock = new Block();
-            newBlock.init(prevBlock);
+            newBlock.init(blockChain.getTail(), blockChain.getLastTransactions());
         } while (!newBlock.isProved(blockChain.getN()));
 
         LocalTime after = LocalTime.now();
@@ -79,7 +70,6 @@ public class Miner extends MoneyHandler {
                     || !blockChain.addBlock(newBlock)) return null;
 
             long size = blockChain.getSize();
-            newBlock.setMessages(blockChain.getLastTransaction());
             if(size <= BLOCKCHAIN_PRINTED_SIZE) printResult(newBlock, generationTime);
             return newBlock;
         }
