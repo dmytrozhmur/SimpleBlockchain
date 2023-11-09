@@ -43,7 +43,7 @@ public class Miner extends MoneyHandler {
                 log(re.getMessage() + "\n");
             }
 
-            if(generateBlock() != null) moneyHandled += CREATION_AWARD;
+            if(generateBlock() != null) moneyForCreation += CREATION_AWARD;
         }
     }
 
